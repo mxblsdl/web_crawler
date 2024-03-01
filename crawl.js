@@ -34,22 +34,47 @@ function getURLsFromHTML(htmlBody, baseURL) {
   return urls;
 }
 
-async function crawlPage(currentURL) {
+async function crawlPage(baseURL, currentURL, pages) {
+  const cu = new URL(currentURL);
+  const bu = new URL(baseURL);
+  if (cu.hostname !== bu.hostname) {
+    return pages;
+  }
+  const normalCurrent = normalizeURL(currentURL);
+
+  if (pages[normalCurrent] > 0) {
+    pages[normalCurrent]++;
+    return pages;
+  }
+
+  if (currentURL === baseURL) {
+    pages[normalCurrent] = 0;
+  } else {
+    pages[normalCurrent] = 1;
+  }
+
+  console.log(`Crawling ${currentURL}`);
+  let htmlBody = "";
   try {
     const html = await fetch(currentURL);
     if (html.status >= 400) {
       console.log(`error: got status code: ${html.status}`);
-      return;
+      return pages;
     }
     const headers = html.headers.get("content-type");
     if (!headers.includes("text/html")) {
       console.log(`error: content type: ${headers}`);
-      return;
+      return pages;
     }
-    console.log(await html.text());
+    htmlBody = await html.text();
   } catch (err) {
     console.log("Error", err);
   }
+  const nextURLS = getURLsFromHTML(htmlBody, baseURL);
+  for (const url of nextURLS) {
+    pages = await crawlPage(baseURL, url, pages);
+  }
+  return pages;
 }
 
 module.exports = {

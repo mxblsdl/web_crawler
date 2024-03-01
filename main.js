@@ -1,5 +1,6 @@
 const { normalizeURL, crawlPage } = require("./crawl");
 const { argv } = require("node:process");
+const { printReport } = require("./report");
 
 async function main() {
   //   argv.forEach((val, index) => {
@@ -14,7 +15,8 @@ async function main() {
     process.exit();
   } else {
     console.log(`Starting web scape for ${baseURL[0]}`);
-    await crawlPage(baseURL);
+    const pages = await crawlPage(baseURL, baseURL, {});
+    printReport(pages);
   }
 }
 
